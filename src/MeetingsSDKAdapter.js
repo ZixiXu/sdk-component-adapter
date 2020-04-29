@@ -14,9 +14,17 @@ const START_SHARE = 'start-share';
 const MEDIA_TYPE_LOCAL = 'local';
 const MEDIA_TYPE_REMOTE_AUDIO = 'remoteAudio';
 const MEDIA_TYPE_REMOTE_VIDEO = 'remoteVideo';
+const MEDIA_TYPE_LOCAL_SHARE = 'localShare';
+const MEDIA_TYPE_REMOTE_SHARE = 'remoteShare';
 const HYDRA_ID_TYPE_PEOPLE = 'PEOPLE';
 const HYDRA_ID_TYPE_ROOM = 'ROOM';
-const MEDIA_EVENT_TYPES = [MEDIA_TYPE_LOCAL, MEDIA_TYPE_REMOTE_AUDIO, MEDIA_TYPE_REMOTE_VIDEO];
+const MEDIA_EVENT_TYPES = [
+  MEDIA_TYPE_LOCAL,
+  MEDIA_TYPE_REMOTE_AUDIO,
+  MEDIA_TYPE_REMOTE_VIDEO,
+  MEDIA_TYPE_LOCAL_SHARE,
+  MEDIA_TYPE_REMOTE_SHARE,
+];
 const DEFAULT_MEDIA_SETTINGS = {
   receiveVideo: true,
   receiveAudio: true,
@@ -135,6 +143,12 @@ export default class MeetingsSDKAdapter extends MeetingsAdapter {
         break;
       case MEDIA_TYPE_REMOTE_VIDEO:
         this.meetings[ID] = {...meeting, remoteVideo: stream};
+        break;
+      case MEDIA_TYPE_LOCAL_SHARE:
+        this.meetings[ID] = {...meeting, localShare: stream};
+        break;
+      case MEDIA_TYPE_REMOTE_SHARE:
+        this.meetings[ID] = {...meeting, remoteShare: stream};
         break;
       default:
         break;
