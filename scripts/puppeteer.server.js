@@ -18,6 +18,14 @@ function handleVideo() {
   });
 }
 
+function handleShare() {
+  webexSDKAdapter.meetingsAdapter.meetingControls['start-share'].display(MEETING_ID).subscribe((data) => {
+    const startShare = document.getElementById('start-share');
+
+    startShare.innerHTML = data.tooltip;
+  });
+}
+
 function getMeeting() {
   webexSDKAdapter.meetingsAdapter.getMeeting(MEETING_ID).subscribe(
     (meeting) => {
@@ -28,7 +36,10 @@ function getMeeting() {
       document.getElementById('remote-video').srcObject = meeting.remoteVideo;
       document.getElementById('local-audio').srcObject = meeting.localAudio;
       document.getElementById('local-video').srcObject = meeting.localVideo;
+      document.getElementById('local-share').srcObject = meeting.localShare;
+      document.getElementById('remote-share').srcObject = meeting.remoteShare;
       document.getElementById('meeting-title').innerHTML = meeting.title;
+      
     },
     () => {},
     // eslint-disable-next-line no-console
@@ -67,6 +78,7 @@ document.getElementById('dialer').addEventListener('click', async (event) => {
           getMeeting();
           handleAudio();
           handleVideo();
+          handleShare();
         });
         break;
       case 'join-meeting':
@@ -92,6 +104,9 @@ document.getElementById('actions').addEventListener('click', async (event) => {
         break;
       case 'mute-video':
         await webexSDKAdapter.meetingsAdapter.meetingControls['mute-video'].action(MEETING_ID);
+        break;
+      case 'start-share':
+        await webexSDKAdapter.meetingsAdapter.meetingControls['start-share'].action(MEETING_ID);
         break;
     }
   } catch (error) {

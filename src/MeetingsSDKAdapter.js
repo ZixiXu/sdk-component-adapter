@@ -10,6 +10,7 @@ const JOIN_CONTROL = 'join-meeting';
 const EXIT_CONTROL = 'leave-meeting';
 const AUDIO_CONTROL = 'mute-audio';
 const VIDEO_CONTROL = 'mute-video';
+const START_SHARE = 'start-share';
 const MEDIA_TYPE_LOCAL = 'local';
 const MEDIA_TYPE_REMOTE_AUDIO = 'remoteAudio';
 const MEDIA_TYPE_REMOTE_VIDEO = 'remoteVideo';
@@ -19,7 +20,7 @@ const MEDIA_EVENT_TYPES = [MEDIA_TYPE_LOCAL, MEDIA_TYPE_REMOTE_AUDIO, MEDIA_TYPE
 const DEFAULT_MEDIA_SETTINGS = {
   receiveVideo: true,
   receiveAudio: true,
-  receiveShare: false,
+  receiveShare: true,
   sendVideo: true,
   sendAudio: true,
   sendShare: false,
@@ -54,6 +55,12 @@ export default class MeetingsSDKAdapter extends MeetingsAdapter {
       ID: VIDEO_CONTROL,
       action: this.handleLocalVideo.bind(this),
       display: this.videoControl.bind(this),
+    };
+
+    this.meetingControls[START_SHARE] = {
+      ID: START_SHARE,
+      action: this.handleLocalShare.bind(this),
+      display: this.shareControl.bind(this),
     };
 
     this.meetingControls[EXIT_CONTROL] = {
@@ -146,8 +153,10 @@ export default class MeetingsSDKAdapter extends MeetingsAdapter {
       ...this.meetings[ID],
       localAudio: null,
       localVideo: null,
+      localShare: null,
       remoteAudio: null,
       remoteVideo: null,
+      remoteShare: null,
     };
   }
 
@@ -509,6 +518,75 @@ export default class MeetingsSDKAdapter extends MeetingsAdapter {
     return concat(getDisplayData$, localMediaUpdateEvent$);
   }
 
+  async handleLocalShare(ID) {
+    const sdkMeeting = this.fetchMeeting(ID);
+    let shareEnabled = this.meetings[ID].localShare !== null;
+
+    if (!shareEnabled) {
+      const response = await sdkMeeting.getMediaStreams({sendShare: true});
+
+      // Store the current local video stream to avoid an extra request call
+      // eslint-disable-next-line prefer-destructuring
+      this.meetings[ID].localShare = response[1];
+      this.meetings[ID].disabledLocalShare = null;
+
+      await sdkMeeting.updateShare({stream: response[1], sendShare: true, receiveShare: true});
+      shareEnabled = true;
+    } else {
+      this.meetings[ID].disabledLocalShare = this.meetings[ID].localShare;
+      this.meetings[ID].localShare = null;
+
+      await sdkMeeting.updateShare({
+        sendShare: false,
+        receiveShare: true,
+      });
+      shareEnabled = false;
+    }
+
+    // Due to SDK limitation around local media updates,
+    // we need to emit a custom event for video mute updates
+    sdkMeeting.emit(EVENT_MEDIA_LOCAL_UPDATE, {
+      control: START_SHARE,
+      state: shareEnabled,
+    });
+  }
+
+  // TODO: add toggle control
+  shareControl(ID) {
+    const sdkMeeting = this.fetchMeeting(ID);
+    const startShare = {
+      ID: START_SHARE,
+      icon: 'camera-muted',
+      tooltip: 'Start Share',
+      state: MeetingControlState.ACTIVE,
+      text: null,
+    };
+    const stopShare = {
+      ID: START_SHARE,
+      icon: 'camera-muted',
+      tooltip: 'Stop Share',
+      state: MeetingControlState.INACTIVE,
+      text: null,
+    };
+
+    const getDisplayData$ = Observable.create((observer) => {
+      if (sdkMeeting) {
+        observer.next(startShare);
+      } else {
+        observer.error(new Error(`Could not find meeting with ID "${ID}" to add share control`));
+      }
+
+      observer.complete();
+    });
+
+    const localMediaUpdateEvent$ = fromEvent(sdkMeeting, EVENT_MEDIA_LOCAL_UPDATE).pipe(
+      filter((event) => event.control === START_SHARE),
+      map(({state}) => (state ? stopShare : startShare))
+    );
+
+    return concat(getDisplayData$, localMediaUpdateEvent$);
+  }
+
   /**
    * Returns an observable that emits meeting data of the given ID.
    *
@@ -551,11 +629,7 @@ export default class MeetingsSDKAdapter extends MeetingsAdapter {
       const getMeetingWithEvents$ = concat(getMeeting$, meetingsWithEvents$);
 
       // Convert to a multicast observable
-      this.getMeetingObservables[ID] = getMeetingWithEvents$.pipe(
-        publishReplay(1),
-        refCount(),
-        takeUntil(end$)
-      );
+      this.getMeetingObservables[ID] = getMeetingWithEvents$.pipe(publishReplay(1), refCount(), takeUntil(end$));
     }
 
     return this.getMeetingObservables[ID];
