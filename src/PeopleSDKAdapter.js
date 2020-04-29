@@ -127,10 +127,7 @@ export default class PeopleSDKAdapter extends PeopleAdapter {
       );
 
       // Store observable for future subscriptions
-      this.getPersonObservables[ID] = getPerson$.pipe(
-        publishReplay(1),
-        refCount()
-      );
+      this.getPersonObservables[ID] = getPerson$.pipe(publishReplay(1), refCount());
     }
 
     return this.getPersonObservables[ID];

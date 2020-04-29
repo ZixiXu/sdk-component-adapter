@@ -53,6 +53,7 @@ export default class RoomsSDKAdapter extends RoomsAdapter {
       // Tell the sdk to start listening to room changes
       this.datasource.rooms.listen();
     }
+    // eslint-disable-next-line operator-assignment
     this.listenerCount = this.listenerCount + 1;
   }
 
@@ -67,6 +68,7 @@ export default class RoomsSDKAdapter extends RoomsAdapter {
    * @memberof RoomsSDKAdapter
    */
   stopListeningToRoomUpdates() {
+    // eslint-disable-next-line operator-assignment
     this.listenerCount = this.listenerCount - 1;
 
     if (this.listenerCount <= 0) {
@@ -111,10 +113,7 @@ export default class RoomsSDKAdapter extends RoomsAdapter {
       );
 
       // Convert to a multicast observable
-      this.getRoomObservables[ID] = getRoom$.pipe(
-        publishReplay(1),
-        refCount()
-      );
+      this.getRoomObservables[ID] = getRoom$.pipe(publishReplay(1), refCount());
     }
 
     return this.getRoomObservables[ID];
