@@ -39,7 +39,12 @@ function getMeeting() {
       document.getElementById('local-share').srcObject = meeting.localShare;
       document.getElementById('remote-share').srcObject = meeting.remoteShare;
       document.getElementById('meeting-title').innerHTML = meeting.title;
-      
+
+      if (meeting.localShare){
+        meeting.localShare.getVideoTracks()[0].onended = async function () {
+          await webexSDKAdapter.meetingsAdapter.meetingControls['start-share'].action(MEETING_ID);
+        };
+      }      
     },
     () => {},
     // eslint-disable-next-line no-console

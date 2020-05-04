@@ -107,6 +107,7 @@ export default class MeetingsSDKAdapter extends MeetingsAdapter {
     try {
       const [localStream] = await sdkMeeting.getMediaStreams(DEFAULT_MEDIA_SETTINGS);
 
+      localMedia.localStream = localStream;
       localMedia.localAudio = new MediaStream(localStream.getAudioTracks());
       localMedia.localVideo = new MediaStream(localStream.getVideoTracks());
     } catch (error) {
@@ -163,6 +164,9 @@ export default class MeetingsSDKAdapter extends MeetingsAdapter {
    * @private
    */
   removeMedia(ID) {
+    this.meetings[ID].localMedia.getTracks().forEach((track) => track.stop());
+    this.meetings[ID].localAudio.getAudioTracks()[0].stop();
+    this.meetings[ID].localVideo.getVideoTracks()[0].stop();
     this.meetings[ID] = {
       ...this.meetings[ID],
       localAudio: null,
@@ -536,33 +540,35 @@ export default class MeetingsSDKAdapter extends MeetingsAdapter {
     const sdkMeeting = this.fetchMeeting(ID);
     let shareEnabled = this.meetings[ID].localShare !== null;
 
-    if (!shareEnabled) {
-      const response = await sdkMeeting.getMediaStreams({sendShare: true});
+    try {
+      if (!shareEnabled) {
+        const response = await sdkMeeting.getMediaStreams({sendShare: true});
 
-      // Store the current local video stream to avoid an extra request call
-      // eslint-disable-next-line prefer-destructuring
-      this.meetings[ID].localShare = response[1];
-      this.meetings[ID].disabledLocalShare = null;
+        // eslint-disable-next-line prefer-destructuring
+        this.meetings[ID].localShare = response[1];
 
-      await sdkMeeting.updateShare({stream: response[1], sendShare: true, receiveShare: true});
-      shareEnabled = true;
-    } else {
-      this.meetings[ID].disabledLocalShare = this.meetings[ID].localShare;
-      this.meetings[ID].localShare = null;
+        await sdkMeeting.updateShare({stream: response[1], sendShare: true, receiveShare: true});
+        shareEnabled = true;
+      } else {
+        this.meetings[ID].localShare = null;
 
-      await sdkMeeting.updateShare({
-        sendShare: false,
-        receiveShare: true,
+        await sdkMeeting.updateShare({
+          sendShare: false,
+          receiveShare: true,
+        });
+        shareEnabled = false;
+      }
+
+      // Due to SDK limitation around local media updates,
+      // we need to emit a custom event for video mute updates
+      sdkMeeting.emit(EVENT_MEDIA_LOCAL_UPDATE, {
+        control: START_SHARE,
+        state: shareEnabled,
       });
-      shareEnabled = false;
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error(`Unable to update local share settings for meeting "${ID}"`, error);
     }
-
-    // Due to SDK limitation around local media updates,
-    // we need to emit a custom event for video mute updates
-    sdkMeeting.emit(EVENT_MEDIA_LOCAL_UPDATE, {
-      control: START_SHARE,
-      state: shareEnabled,
-    });
   }
 
   // TODO: add toggle control
@@ -627,6 +633,11 @@ export default class MeetingsSDKAdapter extends MeetingsAdapter {
         map((event) => this.attachMedia(ID, event))
       );
 
+      const meetingWithMediaStoppedSharingLocalEvent$ = fromEvent(sdkMeeting, 'meeting:stoppedSharingLocal').pipe(
+        // eslint-disable-next-line no-console
+        map((event) => console.log('1111 meeting:stoppedSharingLocal, ', event))
+      );
+
       const meetingWithMediaStoppedEvent$ = fromEvent(sdkMeeting, EVENT_MEDIA_STOPPED).pipe(
         tap(() => this.removeMedia(ID)),
         tap(() => end$.next(`Completing meeting ${ID}`))
@@ -637,7 +648,8 @@ export default class MeetingsSDKAdapter extends MeetingsAdapter {
       const meetingsWithEvents$ = merge(
         meetingWithMediaReadyEvent$,
         meetingWithMediaStoppedEvent$,
-        meetingWithLocalUpdateEvent$
+        meetingWithLocalUpdateEvent$,
+        meetingWithMediaStoppedSharingLocalEvent$
       ).pipe(map(() => this.meetings[ID])); // Return a meeting object from event
 
       const getMeetingWithEvents$ = concat(getMeeting$, meetingsWithEvents$);
