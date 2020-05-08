@@ -42,7 +42,7 @@ function getMeeting() {
 
       if (meeting.localShare){
         meeting.localShare.getVideoTracks()[0].onended = async function () {
-          await webexSDKAdapter.meetingsAdapter.meetingControls['start-share'].action(MEETING_ID);
+          await webexSDKAdapter.meetingsAdapter.meetingControls['share-control'].action(MEETING_ID);
         };
       }      
     },
@@ -111,7 +111,7 @@ document.getElementById('actions').addEventListener('click', async (event) => {
         await webexSDKAdapter.meetingsAdapter.meetingControls['mute-video'].action(MEETING_ID);
         break;
       case 'start-share':
-        await webexSDKAdapter.meetingsAdapter.meetingControls['start-share'].action(MEETING_ID);
+        await webexSDKAdapter.meetingsAdapter.meetingControls['share-control'].action(MEETING_ID);
         break;
     }
   } catch (error) {

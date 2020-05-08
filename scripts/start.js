@@ -14,7 +14,7 @@ import WebexSDKAdapter from '../src/WebexSDKAdapter';
 // }
 
 const webex = new Webex({
-  credentials: 'ODg3OTYzYTktNWI0MS00MGYzLThjNDItMWNkM2FhOWJkOTMwODgzNDQ5NGQtNDY3_PF84_1eb65fdf-9643-417f-9974-ad72cae0e10f'
+  credentials: 'YzdiYjU4ODctMzdlOC00OWVjLTk2ZDAtNDE4MjY1YmI0ZTI1NDhlZThhZTYtNTFk_PF84_1eb65fdf-9643-417f-9974-ad72cae0e10f'
   // process.env.WEBEX_ACCESS_TOKEN,
 });
 

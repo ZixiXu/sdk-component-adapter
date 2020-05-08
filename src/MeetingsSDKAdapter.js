@@ -5,12 +5,13 @@ import {flatMap, filter, map, publishReplay, refCount, takeUntil, tap} from 'rxj
 
 const EVENT_MEDIA_READY = 'media:ready';
 const EVENT_MEDIA_STOPPED = 'media:stopped';
+// const EVENT_MEETING_STOPPED_SHARING_LOCAL = 'meeting:stoppedSharingLocal';
 const EVENT_MEDIA_LOCAL_UPDATE = 'adapter:media:local:update';
 const JOIN_CONTROL = 'join-meeting';
 const EXIT_CONTROL = 'leave-meeting';
 const AUDIO_CONTROL = 'mute-audio';
 const VIDEO_CONTROL = 'mute-video';
-const START_SHARE = 'start-share';
+const SHARE_CONTROL = 'share-control';
 const MEDIA_TYPE_LOCAL = 'local';
 const MEDIA_TYPE_REMOTE_AUDIO = 'remoteAudio';
 const MEDIA_TYPE_REMOTE_VIDEO = 'remoteVideo';
@@ -65,8 +66,8 @@ export default class MeetingsSDKAdapter extends MeetingsAdapter {
       display: this.videoControl.bind(this),
     };
 
-    this.meetingControls[START_SHARE] = {
-      ID: START_SHARE,
+    this.meetingControls[SHARE_CONTROL] = {
+      ID: SHARE_CONTROL,
       action: this.handleLocalShare.bind(this),
       display: this.shareControl.bind(this),
     };
@@ -167,6 +168,7 @@ export default class MeetingsSDKAdapter extends MeetingsAdapter {
     this.meetings[ID].localMedia.getTracks().forEach((track) => track.stop());
     this.meetings[ID].localAudio.getAudioTracks()[0].stop();
     this.meetings[ID].localVideo.getVideoTracks()[0].stop();
+    // console.log("1111 meeting track is stopped");
     this.meetings[ID] = {
       ...this.meetings[ID],
       localAudio: null,
@@ -562,7 +564,7 @@ export default class MeetingsSDKAdapter extends MeetingsAdapter {
       // Due to SDK limitation around local media updates,
       // we need to emit a custom event for video mute updates
       sdkMeeting.emit(EVENT_MEDIA_LOCAL_UPDATE, {
-        control: START_SHARE,
+        control: SHARE_CONTROL,
         state: shareEnabled,
       });
     } catch (error) {
@@ -571,19 +573,18 @@ export default class MeetingsSDKAdapter extends MeetingsAdapter {
     }
   }
 
-  // TODO: add toggle control
   shareControl(ID) {
     const sdkMeeting = this.fetchMeeting(ID);
     const startShare = {
-      ID: START_SHARE,
-      icon: 'camera-muted',
+      ID: SHARE_CONTROL,
+      icon: 'share',
       tooltip: 'Start Share',
       state: MeetingControlState.ACTIVE,
       text: null,
     };
     const stopShare = {
-      ID: START_SHARE,
-      icon: 'camera-muted',
+      ID: SHARE_CONTROL,
+      icon: 'share',
       tooltip: 'Stop Share',
       state: MeetingControlState.INACTIVE,
       text: null,
@@ -600,7 +601,7 @@ export default class MeetingsSDKAdapter extends MeetingsAdapter {
     });
 
     const localMediaUpdateEvent$ = fromEvent(sdkMeeting, EVENT_MEDIA_LOCAL_UPDATE).pipe(
-      filter((event) => event.control === START_SHARE),
+      filter((event) => event.control === SHARE_CONTROL),
       map(({state}) => (state ? stopShare : startShare))
     );
 
@@ -636,6 +637,8 @@ export default class MeetingsSDKAdapter extends MeetingsAdapter {
       const meetingWithMediaStoppedSharingLocalEvent$ = fromEvent(sdkMeeting, 'meeting:stoppedSharingLocal').pipe(
         // eslint-disable-next-line no-console
         map((event) => console.log('1111 meeting:stoppedSharingLocal, ', event))
+        // this points to wrong context
+        //     async () => await this.meetingControls['start-share'].action(ID)
       );
 
       const meetingWithMediaStoppedEvent$ = fromEvent(sdkMeeting, EVENT_MEDIA_STOPPED).pipe(
@@ -647,9 +650,9 @@ export default class MeetingsSDKAdapter extends MeetingsAdapter {
 
       const meetingsWithEvents$ = merge(
         meetingWithMediaReadyEvent$,
+        meetingWithMediaStoppedSharingLocalEvent$,
         meetingWithMediaStoppedEvent$,
-        meetingWithLocalUpdateEvent$,
-        meetingWithMediaStoppedSharingLocalEvent$
+        meetingWithLocalUpdateEvent$
       ).pipe(map(() => this.meetings[ID])); // Return a meeting object from event
 
       const getMeetingWithEvents$ = concat(getMeeting$, meetingsWithEvents$);
