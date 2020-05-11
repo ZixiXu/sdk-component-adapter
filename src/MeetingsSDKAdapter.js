@@ -543,30 +543,36 @@ export default class MeetingsSDKAdapter extends MeetingsAdapter {
     let shareEnabled = this.meetings[ID].localShare !== null;
 
     try {
-      if (!shareEnabled) {
-        const response = await sdkMeeting.getMediaStreams({sendShare: true});
+      if (sdkMeeting.canUpdateMedia()) {
+        if (!shareEnabled) {
+          const response = await sdkMeeting.getMediaStreams({sendShare: true});
 
-        // eslint-disable-next-line prefer-destructuring
-        this.meetings[ID].localShare = response[1];
+          // eslint-disable-next-line prefer-destructuring
+          this.meetings[ID].localShare = response[1];
 
-        await sdkMeeting.updateShare({stream: response[1], sendShare: true, receiveShare: true});
-        shareEnabled = true;
-      } else {
-        this.meetings[ID].localShare = null;
+          await sdkMeeting.updateShare({stream: response[1], sendShare: true, receiveShare: true});
+          shareEnabled = true;
+        } else {
+          this.meetings[ID].localShare = null;
 
-        await sdkMeeting.updateShare({
-          sendShare: false,
-          receiveShare: true,
+          await sdkMeeting.updateShare({
+            sendShare: false,
+            receiveShare: true,
+          });
+          shareEnabled = false;
+        }
+        // Due to SDK limitation around local media updates,
+        // we need to emit a custom event for video mute updates
+        sdkMeeting.emit(EVENT_MEDIA_LOCAL_UPDATE, {
+          control: SHARE_CONTROL,
+          state: shareEnabled,
         });
-        shareEnabled = false;
+      } else {
+        // eslint-disable-next-line no-console
+        console.error(`
+          Unable to update share for meeting "${ID}": cannot update media due to SDP negotiation in progress
+        `);
       }
-
-      // Due to SDK limitation around local media updates,
-      // we need to emit a custom event for video mute updates
-      sdkMeeting.emit(EVENT_MEDIA_LOCAL_UPDATE, {
-        control: SHARE_CONTROL,
-        state: shareEnabled,
-      });
     } catch (error) {
       // eslint-disable-next-line no-console
       console.error(`Unable to update local share settings for meeting "${ID}"`, error);
