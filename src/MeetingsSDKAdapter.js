@@ -165,9 +165,15 @@ export default class MeetingsSDKAdapter extends MeetingsAdapter {
    * @private
    */
   removeMedia(ID) {
-    this.meetings[ID].localMedia.getTracks().forEach((track) => track.stop());
-    this.meetings[ID].localAudio.getAudioTracks()[0].stop();
-    this.meetings[ID].localVideo.getVideoTracks()[0].stop();
+    if (this.meetings[ID].localMedia) {
+      this.meetings[ID].localMedia.getTracks().forEach((track) => track.stop());
+    }
+    if (this.meetings[ID].localAudio) {
+      this.meetings[ID].localAudio.getAudioTracks()[0].stop();
+    }
+    if (this.meetings[ID].localVideo) {
+      this.meetings[ID].localVideo.getVideoTracks()[0].stop();
+    }
     // console.log("1111 meeting track is stopped");
     this.meetings[ID] = {
       ...this.meetings[ID],
@@ -585,14 +591,14 @@ export default class MeetingsSDKAdapter extends MeetingsAdapter {
       ID: SHARE_CONTROL,
       icon: 'share',
       tooltip: 'Start Share',
-      state: MeetingControlState.ACTIVE,
+      state: MeetingControlState.INACTIVE,
       text: null,
     };
     const stopShare = {
       ID: SHARE_CONTROL,
       icon: 'share',
       tooltip: 'Stop Share',
-      state: MeetingControlState.INACTIVE,
+      state: MeetingControlState.ACTIVE,
       text: null,
     };
 
