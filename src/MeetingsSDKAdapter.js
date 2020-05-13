@@ -158,6 +158,23 @@ export default class MeetingsSDKAdapter extends MeetingsAdapter {
   }
 
   /**
+   * Stop the given media stream.
+   *
+   * @param {stream} stream  stream of the meeting to stop
+   * @memberof MeetingsSDKAdapter
+   * @private
+   */
+  stopMedia(stream) {
+    if (stream) {
+      const tracks = stream.getTracks();
+
+      if (tracks && tracks.length > 0) {
+        tracks.forEach((track) => track.stop());
+      }
+    }
+  }
+
+  /**
    * Update the meeting object by removing all media.
    *
    * @param {string} ID  ID of the meeting to fetch
@@ -165,18 +182,10 @@ export default class MeetingsSDKAdapter extends MeetingsAdapter {
    * @private
    */
   removeMedia(ID) {
-    if (this.meetings[ID].localMedia) {
-      this.meetings[ID].localMedia.getTracks().forEach((track) => track.stop());
-    }
-    if (this.meetings[ID].localAudio) {
-      this.meetings[ID].localAudio.getAudioTracks()[0].stop();
-    }
-    if (this.meetings[ID].localVideo) {
-      this.meetings[ID].localVideo.getVideoTracks()[0].stop();
-    }
-    if (this.meetings[ID].localShare) {
-      this.meetings[ID].localShare.getVideoTracks()[0].stop();
-    }
+    this.stopMedia(this.meetings[ID].localMedia);
+    this.stopMedia(this.meetings[ID].localAudio);
+    this.stopMedia(this.meetings[ID].localVideo);
+    this.stopMedia(this.meetings[ID].localShare);
     // console.log("1111 meeting track is stopped");
     this.meetings[ID] = {
       ...this.meetings[ID],
@@ -316,12 +325,14 @@ export default class MeetingsSDKAdapter extends MeetingsAdapter {
     try {
       const sdkMeeting = this.fetchMeeting(ID);
 
-      // Due to SDK limitations, We need to emit a media stopped event for remote media types
-      sdkMeeting.emit(EVENT_MEDIA_STOPPED, {type: MEDIA_TYPE_REMOTE_AUDIO});
-      sdkMeeting.emit(EVENT_MEDIA_STOPPED, {type: MEDIA_TYPE_REMOTE_VIDEO});
-      sdkMeeting.emit(EVENT_MEDIA_STOPPED, {type: MEDIA_TYPE_LOCAL_SHARE});
+      if (sdkMeeting) {
+        // Due to SDK limitations, We need to emit a media stopped event for remote media types
+        sdkMeeting.emit(EVENT_MEDIA_STOPPED, {type: MEDIA_TYPE_REMOTE_AUDIO});
+        sdkMeeting.emit(EVENT_MEDIA_STOPPED, {type: MEDIA_TYPE_REMOTE_VIDEO});
+        sdkMeeting.emit(EVENT_MEDIA_STOPPED, {type: MEDIA_TYPE_LOCAL_SHARE});
 
-      await sdkMeeting.leave();
+        await sdkMeeting.leave();
+      }
     } catch (error) {
       // eslint-disable-next-line no-console
       console.error(`Unable to leave from the meeting "${ID}"`, error);
