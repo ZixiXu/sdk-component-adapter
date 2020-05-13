@@ -19,8 +19,8 @@ function handleVideo() {
 }
 
 function handleShare() {
-  webexSDKAdapter.meetingsAdapter.meetingControls['start-share'].display(MEETING_ID).subscribe((data) => {
-    const startShare = document.getElementById('start-share');
+  webexSDKAdapter.meetingsAdapter.meetingControls['share-control'].display(MEETING_ID).subscribe((data) => {
+    const startShare = document.getElementById('share-control');
 
     startShare.innerHTML = data.tooltip;
   });
@@ -110,7 +110,7 @@ document.getElementById('actions').addEventListener('click', async (event) => {
       case 'mute-video':
         await webexSDKAdapter.meetingsAdapter.meetingControls['mute-video'].action(MEETING_ID);
         break;
-      case 'start-share':
+      case 'share-control':
         await webexSDKAdapter.meetingsAdapter.meetingControls['share-control'].action(MEETING_ID);
         break;
     }
