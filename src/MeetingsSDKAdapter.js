@@ -597,6 +597,13 @@ export default class MeetingsSDKAdapter extends MeetingsAdapter {
         control: SHARE_CONTROL,
         state: MeetingControlState.INACTIVE,
       });
+
+      if (this.meetings[ID].localShare) {
+        // eslint-disable-next-line no-console
+        console.warn(`Stop local share stream for meeting "${ID}"`);
+        this.meetings[ID].localShare.getVideoTracks()[0].stop();
+        this.meetings[ID].localShare = null;
+      }
     }
   }
 
@@ -616,7 +623,6 @@ export default class MeetingsSDKAdapter extends MeetingsAdapter {
       state: MeetingControlState.ACTIVE,
       text: null,
     };
-
     const shareBusy = {
       ID: SHARE_CONTROL,
       icon: 'share',
