@@ -122,12 +122,14 @@ export default class MeetingsSDKAdapter extends MeetingsAdapter {
    * @returns {stream}
    */
   async getLocalStream(ID, constraint) {
-    const sdkMeeting = this.fetchMeeting(ID);
-
     try {
-      const [localStream] = await sdkMeeting.getMediaStreams(constraint);
+      const sdkMeeting = this.fetchMeeting(ID);
 
-      return localStream;
+      if (sdkMeeting) {
+        const [localStream] = await sdkMeeting.getMediaStreams(constraint);
+
+        return localStream;
+      }
     } catch (error) {
       // eslint-disable-next-line no-console
       console.warn(`Unable to retrieve local stream media "${ID}"`, error);
