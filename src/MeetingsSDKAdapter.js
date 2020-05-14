@@ -310,7 +310,19 @@ export default class MeetingsSDKAdapter extends MeetingsAdapter {
     try {
       const sdkMeeting = this.fetchMeeting(ID);
       const {localAudio, localVideo} = this.meetings[ID];
-      const [localStream] = await sdkMeeting.getMediaStreams(DEFAULT_MEDIA_SETTINGS);
+      const localStream = new MediaStream();
+
+      if (localAudio) {
+        const tracks = localAudio.getTracks();
+
+        tracks.forEach((track) => localStream.addTrack(track));
+      }
+
+      if (localVideo) {
+        const tracks = localVideo.getTracks();
+
+        tracks.forEach((track) => localStream.addTrack(track));
+      }
 
       await sdkMeeting.join();
 
