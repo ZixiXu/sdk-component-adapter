@@ -31,7 +31,7 @@ const DEFAULT_MEDIA_SETTINGS = {
   receiveAudio: false,
   receiveShare: true,
   sendVideo: true,
-  sendAudio: false,
+  sendAudio: true,
   sendShare: false,
 };
 
@@ -102,21 +102,38 @@ export default class MeetingsSDKAdapter extends MeetingsAdapter {
    * @returns {Object}
    */
   async getLocalMedia(ID) {
-    const sdkMeeting = this.fetchMeeting(ID);
     const localMedia = {localAudio: null, localVideo: null};
 
-    try {
-      const [localStream] = await sdkMeeting.getMediaStreams(DEFAULT_MEDIA_SETTINGS);
-
-      localMedia.localStream = localStream;
-      localMedia.localAudio = new MediaStream(localStream.getAudioTracks());
-      localMedia.localVideo = new MediaStream(localStream.getVideoTracks());
-    } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error(`Unable to retrieve local stream media "${ID}"`, error);
+    if (DEFAULT_MEDIA_SETTINGS.sendAudio) {
+      localMedia.localAudio = await this.getLocalStream(ID, {sendAudio: true});
+    }
+    if (DEFAULT_MEDIA_SETTINGS.sendVideo) {
+      localMedia.localVideo = await this.getLocalStream(ID, {sendVideo: true});
     }
 
     return localMedia;
+  }
+
+  /**
+   * Return the local audio/video stream
+   *
+   * @param {string} ID
+   * @param {Object} constraint
+   * @returns {stream}
+   */
+  async getLocalStream(ID, constraint) {
+    const sdkMeeting = this.fetchMeeting(ID);
+
+    try {
+      const [localStream] = await sdkMeeting.getMediaStreams(constraint);
+
+      return localStream;
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.warn(`Unable to retrieve local stream media "${ID}"`, error);
+    }
+
+    return null;
   }
 
   /**
