@@ -201,7 +201,6 @@ export default class MeetingsSDKAdapter extends MeetingsAdapter {
    * @private
    */
   removeMedia(ID) {
-    this.stopMedia(this.meetings[ID].localMedia);
     this.stopMedia(this.meetings[ID].localAudio);
     this.stopMedia(this.meetings[ID].localVideo);
     this.stopMedia(this.meetings[ID].localShare);
@@ -643,8 +642,7 @@ export default class MeetingsSDKAdapter extends MeetingsAdapter {
       if (this.meetings[ID].localShare) {
         // eslint-disable-next-line no-console
         console.warn(`Stop local share stream for meeting "${ID}"`);
-        this.meetings[ID].localShare.getVideoTracks()[0].stop();
-        this.meetings[ID].localShare = null;
+        this.stopMedia(this.meetings[ID].localShare);
       }
     }
   }
