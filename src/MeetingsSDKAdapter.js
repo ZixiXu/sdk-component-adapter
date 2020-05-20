@@ -215,7 +215,6 @@ export default class MeetingsSDKAdapter extends MeetingsAdapter {
       remoteAudio: null,
       remoteVideo: null,
       remoteShare: null,
-      remoteShareState: 'mute',
     };
   }
 
@@ -279,7 +278,6 @@ export default class MeetingsSDKAdapter extends MeetingsAdapter {
             remoteAudio: null,
             remoteVideo: null,
             remoteShare: null,
-            remoteShareState: 'mute',
           };
 
           return this.meetings[ID];
