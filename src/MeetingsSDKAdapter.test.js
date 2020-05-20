@@ -71,6 +71,37 @@ describe('Meetings SDK Adapter', () => {
     });
   });
 
+  describe('getStream()', () => {
+    afterEach(() => {
+      mockSDKMeeting.getMediaStreams = jest.fn((constraint) =>
+        Promise.resolve([constraint.sendAudio ? ['localAudio'] : ['localVideo']])
+      );
+    });
+
+    test('throws errors and nullifies local Audio if not retrieved successfully', async () => {
+      mockSDKMeeting.getMediaStreams = jest.fn(() => Promise.reject());
+      global.console.error = jest.fn();
+      const localAudio = await meetingSDKAdapter.getStream(meetingID, {sendAudio: true});
+
+      expect(localAudio).toBeNull();
+      expect(global.console.error).toHaveBeenCalledWith('Unable to retrieve local stream media "meetingID"', undefined);
+    });
+
+    test('throws errors and nullifies local Video if not retrieved successfully', async () => {
+      mockSDKMeeting.getMediaStreams = jest.fn(() => Promise.reject());
+      global.console.error = jest.fn();
+      const localVideo = await meetingSDKAdapter.getStream(meetingID, {sendVideo: true});
+
+      expect(localVideo).toBeNull();
+      expect(global.console.error).toHaveBeenCalledWith('Unable to retrieve local stream media "meetingID"', undefined);
+    });
+
+    test('returns local media in a proper shape', async () => {
+      expect(await meetingSDKAdapter.getStream(meetingID, {sendAudio: true})).toEqual(['localAudio']);
+      expect(await meetingSDKAdapter.getStream(meetingID, {sendVideo: true})).toEqual(['localVideo']);
+    });
+  });
+
   describe('attachMedia()', () => {
     let mockMediaStreamInstance, event;
 
@@ -505,6 +536,88 @@ describe('Meetings SDK Adapter', () => {
         `Unable to update local video settings for meeting "meetingID"`,
         undefined
       );
+    });
+  });
+
+  describe('shareControl()', () => {
+    test('returns the display data of a meeting control in a proper shape', (done) => {
+      meetingSDKAdapter.shareControl(meetingID).subscribe((dataDisplay) => {
+        expect(dataDisplay).toMatchObject({
+          ID: 'share-control',
+          icon: 'share',
+          tooltip: 'Start Share',
+          state: 'inactive',
+          text: null,
+        });
+        done();
+      });
+    });
+
+    test('throws errors if sdk meeting object is not defined', (done) => {
+      meetingSDKAdapter.fetchMeeting = jest.fn();
+
+      meetingSDKAdapter.shareControl(meetingID).subscribe(
+        () => {},
+        (error) => {
+          expect(error.message).toBe('Could not find meeting with ID "meetingID" to add share control');
+          done();
+        }
+      );
+    });
+  });
+
+  describe('handleLocalShare()', () => {
+    beforeEach(() => {
+      meetingSDKAdapter.meetings[meetingID] = {
+        ...meeting,
+        localShare: {},
+        remoteShare: {},
+      };
+    });
+
+    test('skips start/stop share if sdk meeting does not exist', async () => {
+      meetingSDKAdapter.fetchMeeting = jest.fn();
+      global.console.error = jest.fn();
+      await meetingSDKAdapter.handleLocalShare(meetingID);
+      expect(global.console.error).toHaveBeenCalledWith(expect.stringContaining('sdk meeting does not exist'));
+    });
+
+    test('skips start/stop share if sdk meeting is in SDP negotiation', async () => {
+      global.console.error = jest.fn();
+      const {canUpdateMedia} = mockSDKMeeting;
+
+      mockSDKMeeting.canUpdateMedia = jest.fn(() => false);
+      await meetingSDKAdapter.handleLocalShare(meetingID);
+      expect(global.console.error).toHaveBeenCalledWith(
+        expect.stringContaining('cannot update media due to SDP negotiation in progress')
+      );
+      mockSDKMeeting.canUpdateMedia = canUpdateMedia;
+    });
+
+    test('start share if the share track is disabled', async () => {
+      meetingSDKAdapter.meetings[meetingID].localShare = null;
+      const {getMediaStreams} = mockSDKMeeting;
+
+      mockSDKMeeting.getMediaStreams = jest.fn(() => Promise.resolve([['mockStream'], 'localShare']));
+      await meetingSDKAdapter.handleLocalShare(meetingID);
+      expect(meetingSDKAdapter.meetings[meetingID].localShare).toEqual('localShare');
+      expect(mockSDKMeeting.updateShare).toHaveBeenCalled();
+      mockSDKMeeting.getMediaStreams = getMediaStreams;
+    });
+
+    test('stop share if the share track is enabled', async () => {
+      meetingSDKAdapter.meetings[meetingID].localShare = 'localShare';
+      await meetingSDKAdapter.handleLocalShare(meetingID);
+      expect(mockSDKMeeting.updateShare).toHaveBeenCalled();
+      expect(meetingSDKAdapter.meetings[meetingID].localShare).toBeNull();
+    });
+
+    test('throws error and reset sharing stream if share control is not handled properly', async () => {
+      mockSDKMeeting.updateShare = jest.fn(() => Promise.reject());
+      global.console.error = jest.fn();
+      await meetingSDKAdapter.handleLocalShare(meetingID);
+
+      expect(global.console.error).toHaveBeenCalledWith(expect.stringContaining('Unable to update local share'));
     });
   });
 

@@ -19,12 +19,7 @@ export const mockSDKMeeting = {
   sipuri: 'my meeting',
   addMedia: jest.fn(() => Promise.resolve()),
   emit: jest.fn(() => Promise.resolve()),
-  getMediaStreams: jest.fn(() =>
-    Promise.resolve([
-      {getAudioTracks: jest.fn(() => ['localAudio']), getVideoTracks: jest.fn(() => ['localVideo'])},
-      'localShare',
-    ])
-  ),
+  getMediaStreams: jest.fn((constraint) => Promise.resolve([constraint.sendAudio ? ['localAudio'] : ['localVideo']])),
   muteAudio: jest.fn(() => Promise.resolve()),
   muteVideo: jest.fn(() => Promise.resolve()),
   register: jest.fn(() => Promise.resolve()),
@@ -33,6 +28,8 @@ export const mockSDKMeeting = {
   join: jest.fn(() => Promise.resolve()),
   unmuteAudio: jest.fn(() => Promise.resolve()),
   unmuteVideo: jest.fn(() => Promise.resolve()),
+  canUpdateMedia: jest.fn(() => true),
+  updateShare: jest.fn(() => Promise.resolve()),
 };
 
 /**

@@ -133,7 +133,7 @@ export default class MeetingsSDKAdapter extends MeetingsAdapter {
       }
     } catch (error) {
       // eslint-disable-next-line no-console
-      console.warn(`Unable to retrieve local stream media "${ID}"`, error);
+      console.error(`Unable to retrieve local stream media "${ID}"`, error);
     }
 
     return null;
@@ -210,7 +210,7 @@ export default class MeetingsSDKAdapter extends MeetingsAdapter {
    */
   stopStream(stream) {
     if (stream) {
-      const tracks = stream.getTracks();
+      const tracks = stream.getTracks && stream.getTracks();
 
       if (tracks && tracks.length > 0) {
         tracks.forEach((track) => track.stop());
@@ -226,9 +226,11 @@ export default class MeetingsSDKAdapter extends MeetingsAdapter {
    * @private
    */
   removeMedia(ID) {
-    this.stopStream(this.meetings[ID].localAudio);
-    this.stopStream(this.meetings[ID].localVideo);
-    this.stopStream(this.meetings[ID].localShare);
+    if (this.meetings && this.meetings[ID]) {
+      this.stopStream(this.meetings[ID].localAudio);
+      this.stopStream(this.meetings[ID].localVideo);
+      this.stopStream(this.meetings[ID].localShare);
+    }
     this.meetings[ID] = {
       ...this.meetings[ID],
       localAudio: null,
@@ -625,6 +627,15 @@ export default class MeetingsSDKAdapter extends MeetingsAdapter {
   async handleLocalShare(ID) {
     const sdkMeeting = this.fetchMeeting(ID);
 
+    if (!sdkMeeting) {
+      // eslint-disable-next-line no-console
+      console.error(`
+        Unable to update share for meeting "${ID}": sdk meeting does not exist
+      `);
+
+      return;
+    }
+
     if (!sdkMeeting.canUpdateMedia()) {
       // eslint-disable-next-line no-console
       console.error(`
@@ -666,6 +677,8 @@ export default class MeetingsSDKAdapter extends MeetingsAdapter {
     };
 
     const resetSharingStream = () => {
+      // eslint-disable-next-line no-console
+      console.error(`Unable to update local share for meeting "${ID}"`);
       sdkMeeting.emit(EVENT_MEDIA_LOCAL_UPDATE, {
         control: SHARE_CONTROL,
         state: MeetingControlState.INACTIVE,
@@ -695,6 +708,13 @@ export default class MeetingsSDKAdapter extends MeetingsAdapter {
     }
   }
 
+  /**
+   * Returns an observable that emits the display data of a share control.
+   *
+   * @param {string} ID ID of the meeting to start/stop share
+   * @returns {Observable.<MeetingControlDisplay>}
+   * @memberof MeetingJSONAdapter
+   */
   shareControl(ID) {
     const sdkMeeting = this.fetchMeeting(ID);
     const shareInactiveMsg = {
