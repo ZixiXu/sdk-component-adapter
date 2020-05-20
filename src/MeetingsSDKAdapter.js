@@ -171,30 +171,6 @@ export default class MeetingsSDKAdapter extends MeetingsAdapter {
         break;
       case MEDIA_TYPE_REMOTE_SHARE:
         this.meetings[ID] = {...meeting, remoteShare: stream};
-        if (this.meetings[ID].remoteShare) {
-          const currMeeting = this.meetings[ID];
-          const track = currMeeting.remoteShare.getVideoTracks()[0];
-
-          track.addEventListener(
-            'mute',
-            (event) => {
-              currMeeting.remoteShareState = 'mute';
-              // eslint-disable-next-line no-console
-              console.log('remoteShare state=', 'mute', currMeeting, event);
-            },
-            false
-          );
-
-          track.addEventListener(
-            'unmute',
-            (event) => {
-              currMeeting.remoteShareState = 'unmute';
-              // eslint-disable-next-line no-console
-              console.log('remoteShare state=', 'unmute', currMeeting, event);
-            },
-            false
-          );
-        }
         break;
       default:
         break;
