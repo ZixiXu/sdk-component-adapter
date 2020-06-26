@@ -1,6 +1,7 @@
 import RoomsSDKAdapter from './RoomsSDKAdapter';
 import PeopleSDKAdapter from './PeopleSDKAdapter';
 import MeetingsSDKAdapter from './MeetingsSDKAdapter';
+import MembershipSDKAdapter from './MembershipSDKAdapter';
 
 export default class WebexSDKAdapter {
   /**
@@ -15,6 +16,7 @@ export default class WebexSDKAdapter {
     this.peopleAdapter = new PeopleSDKAdapter(sdk);
     this.roomsAdapter = new RoomsSDKAdapter(sdk);
     this.meetingsAdapter = new MeetingsSDKAdapter(sdk);
+    this.membershipSDKAdapter = new MembershipSDKAdapter(sdk);
     this.sdk = sdk;
   }
 
@@ -25,12 +27,14 @@ export default class WebexSDKAdapter {
     await this.sdk.internal.device.register();
     await this.sdk.internal.mercury.connect();
     await this.meetingsAdapter.connect();
+    // await this.membershipSDKAdapter.connect();
   }
 
   /**
    * Disconnect from Webex services, closing any connections SDK may have opened.
    */
   async disconnect() {
+    // await this.membershipSDKAdapter.disconnect();
     await this.meetingsAdapter.disconnect();
     await this.sdk.internal.mercury.disconnect();
     await this.sdk.internal.device.unregister();

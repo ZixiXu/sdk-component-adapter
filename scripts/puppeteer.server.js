@@ -28,6 +28,37 @@ function handleShare() {
   });
 }
 
+function handleMembers() {
+  webexSDKAdapter.membershipSDKAdapter.getMembership(MEETING_ID, 'meeting').subscribe((membership) => {
+    if (membership && membership.members) {
+      Object.keys(membership.members).forEach((key) => {
+        const member = membership.members[key];
+        
+        if (!document.getElementById(member.personID)) {
+          let tbody = document.getElementsByTagName('tbody')[0];
+          let tr = document.createElement('tr');
+          tr.setAttribute('id', member.personID);
+          for (let i = 0; i < 8; i++) {
+            let td = document.createElement('td');
+            tr.appendChild(td);
+          }
+          tbody.appendChild(tr);
+        }
+        
+        let dataCells = document.getElementById(member.personID).getElementsByTagName('td');
+        dataCells[0].innerHTML = member.email;
+        dataCells[1].innerHTML = member.name;
+        dataCells[2].innerHTML = !!member.isAudioMuted;
+        dataCells[3].innerHTML = !!member.isVideoMuted;
+        dataCells[4].innerHTML = !!member.isSelf;
+        dataCells[5].innerHTML = !!member.isHost;
+        dataCells[6].innerHTML = !!member.isInMeeting;
+        dataCells[7].innerHTML = !!member.isContentSharing;
+      });
+    }
+  });
+}
+
 function getMeeting() {
   webexSDKAdapter.meetingsAdapter.getMeeting(MEETING_ID).subscribe(
     (meeting) => {
@@ -80,6 +111,7 @@ document.getElementById('dialer').addEventListener('click', async (event) => {
           handleAudio();
           handleVideo();
           handleShare();
+          handleMembers();
         });
         break;
       case 'join-meeting':
