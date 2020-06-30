@@ -1,7 +1,7 @@
 import {concat, fromEvent, Observable} from 'rxjs';
 import {map, publishReplay, refCount} from 'rxjs/operators';
 
-import MembershipAdapter from './MembershipAdapter';
+import MembershipAdapter from '../../component-adapter-interfaces/src/MembershipAdapter.js';
 
 // JS SDK Events
 const EVENT_MEMBERS_UPDATE = 'members:update';
@@ -18,22 +18,6 @@ export default class MembershipSDKAdapter extends MembershipAdapter {
     super(datasource);
     this.getMembershipObservables = {};
     this.membership = {};
-  }
-
-  /**
-   * Register the SDK meeting plugin to the device
-   * and sync the meeting collection from the server.
-   */
-  async connect() {
-    await this.datasource.meetings.register();
-    await this.datasource.meetings.syncMeetings();
-  }
-
-  /**
-   * Unregister the SDK meeting plugin from the device.
-   */
-  async disconnect() {
-    await this.datasource.meetings.unregister();
   }
 
   /**

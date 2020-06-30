@@ -27,14 +27,12 @@ export default class WebexSDKAdapter {
     await this.sdk.internal.device.register();
     await this.sdk.internal.mercury.connect();
     await this.meetingsAdapter.connect();
-    // await this.membershipSDKAdapter.connect();
   }
 
   /**
    * Disconnect from Webex services, closing any connections SDK may have opened.
    */
   async disconnect() {
-    // await this.membershipSDKAdapter.disconnect();
     await this.meetingsAdapter.disconnect();
     await this.sdk.internal.mercury.disconnect();
     await this.sdk.internal.device.unregister();
