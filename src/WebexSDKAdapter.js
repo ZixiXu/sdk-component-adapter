@@ -16,7 +16,7 @@ export default class WebexSDKAdapter {
     this.peopleAdapter = new PeopleSDKAdapter(sdk);
     this.roomsAdapter = new RoomsSDKAdapter(sdk);
     this.meetingsAdapter = new MeetingsSDKAdapter(sdk);
-    this.membershipSDKAdapter = new MembershipSDKAdapter(sdk);
+    this.membershipAdapter = new MembershipSDKAdapter(sdk);
     this.sdk = sdk;
   }
 

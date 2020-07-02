@@ -55,17 +55,16 @@ export default class MembershipSDKAdapter extends MembershipAdapter {
         observer.complete();
       });
 
+      if (!this.membership[destinationID]) {
+        this.membership[destinationID] = {
+          destinationID,
+          destinationType,
+          members: [],
+        };
+      }
+
       const membershipUpdateEvent$ = fromEvent(sdkMeeting.members, EVENT_MEMBERS_UPDATE).pipe(
         map(({full}) => {
-          // console.log("membership!");
-          if (!this.membership[destinationID]) {
-            this.membership[destinationID] = {
-              destinationID,
-              destinationType,
-              members: [],
-            };
-          }
-
           Object.keys(full).forEach((key) => {
             this.membership[destinationID].members.push({
               personID: full[key].id,
