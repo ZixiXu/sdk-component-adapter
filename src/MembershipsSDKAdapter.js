@@ -1,7 +1,6 @@
 import {concat, fromEvent, Observable} from 'rxjs';
 import {map, publishReplay, refCount} from 'rxjs/operators';
-
-import MembershipsAdapter from '../../component-adapter-interfaces/src/MembershipsAdapter.js';
+import {MembershipsAdapter} from '@webex/component-adapter-interfaces';
 
 // JS SDK Events
 const EVENT_MEMBERS_UPDATE = 'members:update';
