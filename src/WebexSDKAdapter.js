@@ -1,7 +1,7 @@
 import RoomsSDKAdapter from './RoomsSDKAdapter';
 import PeopleSDKAdapter from './PeopleSDKAdapter';
 import MeetingsSDKAdapter from './MeetingsSDKAdapter';
-import MembershipSDKAdapter from './MembershipSDKAdapter';
+import MembershipsSDKAdapter from './MembershipsSDKAdapter';
 
 export default class WebexSDKAdapter {
   /**
@@ -16,7 +16,7 @@ export default class WebexSDKAdapter {
     this.peopleAdapter = new PeopleSDKAdapter(sdk);
     this.roomsAdapter = new RoomsSDKAdapter(sdk);
     this.meetingsAdapter = new MeetingsSDKAdapter(sdk);
-    this.membershipAdapter = new MembershipSDKAdapter(sdk);
+    this.membershipsAdapter = new MembershipsSDKAdapter(sdk);
     this.sdk = sdk;
   }
 

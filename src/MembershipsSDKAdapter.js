@@ -1,23 +1,23 @@
 import {concat, fromEvent, Observable} from 'rxjs';
 import {map, publishReplay, refCount} from 'rxjs/operators';
 
-import MembershipAdapter from '../../component-adapter-interfaces/src/MembershipAdapter.js';
+import MembershipsAdapter from '../../component-adapter-interfaces/src/MembershipsAdapter.js';
 
 // JS SDK Events
 const EVENT_MEMBERS_UPDATE = 'members:update';
 
 /**
- * The `MembershipSDKAdapter` is an implementation of the `MembershipAdapter` interface.
- * This adapter utilizes the Webex JS SDK to create and join webex meetings.
+ * The `MembershipsSDKAdapter` is an implementation of the `MembershipsAdapter` interface.
+ * This adapter utilizes the Webex JS SDK to fetch membership state updates.
  *
- * @class MembershipSDKAdapter
- * @extends {MembershipAdapter}
+ * @class MembershipsSDKAdapter
+ * @extends {MembershipsAdapter}
  */
-export default class MembershipSDKAdapter extends MembershipAdapter {
+export default class MembershipsSDKAdapter extends MembershipsAdapter {
   constructor(datasource) {
     super(datasource);
     this.getMembershipObservables = {};
-    this.membership = {};
+    this.memberships = {};
   }
 
   /**
@@ -25,7 +25,7 @@ export default class MembershipSDKAdapter extends MembershipAdapter {
    *
    * @param {string} ID ID of the meeting to fetch.
    * @returns {Object} The SDK meeting object from the meetings collection.
-   * @memberof MeetingsSDKAdapter
+   * @memberof MembershipsSDKAdapter
    * @private
    */
   fetchMeeting(ID) {
@@ -35,19 +35,19 @@ export default class MembershipSDKAdapter extends MembershipAdapter {
   /**
    * Returns an observable that emits meeting data of the given destinationID.
    *
-   * @param {string} destinationID  ID of the meeting to get.
-   * @param {string} destinationType  type of the meeting to get.
+   * @param {string} destinationID  ID of the destination for which to get members.
+   * @param {DestinationType} destinationType  type of the membership destination.
    * @returns {Observable.<Membership>}
-   * @memberof MembershipSDKAdapter
+   * @memberof MembershipsSDKAdapter
    */
-  getMembership(destinationID, destinationType) {
+  getMembersFromDestination(destinationID, destinationType) {
     if (!(destinationID in this.getMembershipObservables)) {
       // console.log("first membership!");
 
       const sdkMeeting = this.fetchMeeting(destinationID);
       const getMembership$ = Observable.create((observer) => {
-        if (this.membership[destinationID]) {
-          observer.next(this.membership[destinationID]);
+        if (this.memberships[destinationID]) {
+          observer.next(this.memberships[destinationID]);
         } else {
           observer.next({});
         }
@@ -79,7 +79,7 @@ export default class MembershipSDKAdapter extends MembershipAdapter {
             });
           });
 
-          return this.membership[destinationID];
+          return this.memberships[destinationID];
         })
       );
 
