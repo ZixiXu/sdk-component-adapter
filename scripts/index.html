@@ -31,6 +31,7 @@
             <button id="share-screen">Screen Share</button>
           </fieldset>
           <fieldset>
+            <legend>In Meeting:</legend>
             <table style="text-align:center;width:100%;">
               <thead>
                 <tr>
@@ -40,11 +41,27 @@
                   <th>isVideoMuted</th>
                   <th>isSelf</th>
                   <th>isHost</th>
-                  <th>isInMeeting</th>
                   <th>isSharing</th>
                 </tr>
               </thead>
-              <tbody></tbody>
+              <tbody id="inMeetingMembers"></tbody>
+            </table>
+          </fieldset>
+          <fieldset>
+            <legend>Not In Meeting:</legend>
+            <table style="text-align:center;width:100%;">
+              <thead>
+                <tr>
+                  <th>Email</th>
+                  <th>Name</th>
+                  <th>isAudioMuted</th>
+                  <th>isVideoMuted</th>
+                  <th>isSelf</th>
+                  <th>isHost</th>
+                  <th>isSharing</th>
+                </tr>
+              </thead>
+              <tbody id="notInMeetingMembers"></tbody>
             </table>
           </fieldset>
         </form>

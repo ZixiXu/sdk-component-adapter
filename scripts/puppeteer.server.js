@@ -1,6 +1,7 @@
 import webexSDKAdapter from './start';
 
 let MEETING_ID = null;
+const ROSTER_STATES = ['email', 'name', 'isAudioMuted', 'isVideoMuted', 'isSelf', 'isHost', 'isSharing'];
 
 function handleAudio() {
   webexSDKAdapter.meetingsAdapter.meetingControls['mute-audio'].display(MEETING_ID).subscribe((data) => {
@@ -29,34 +30,31 @@ function handleShare() {
 }
 
 function handleMembers() {
-  webexSDKAdapter.membershipSDKAdapter.getMembership(MEETING_ID, 'meeting').subscribe((membership) => {
+  webexSDKAdapter.membershipsAdapter.getMembersFromDestination(MEETING_ID, 'meeting').subscribe((membership) => {
     if (membership && membership.members) {
-      Object.keys(membership.members).forEach((key) => {
-        const member = membership.members[key];
-        
-        if (!document.getElementById(member.personID)) {
-          let tbody = document.getElementsByTagName('tbody')[0];
-          let tr = document.createElement('tr');
-          tr.setAttribute('id', member.personID);
-          for (let i = 0; i < 8; i++) {
-            let td = document.createElement('td');
-            tr.appendChild(td);
-          }
-          tbody.appendChild(tr);
-        }
-        
-        let dataCells = document.getElementById(member.personID).getElementsByTagName('td');
-        dataCells[0].innerHTML = member.email;
-        dataCells[1].innerHTML = member.name;
-        dataCells[2].innerHTML = !!member.isAudioMuted;
-        dataCells[3].innerHTML = !!member.isVideoMuted;
-        dataCells[4].innerHTML = !!member.isSelf;
-        dataCells[5].innerHTML = !!member.isHost;
-        dataCells[6].innerHTML = !!member.isInMeeting;
-        dataCells[7].innerHTML = !!member.isContentSharing;
-      });
+      updateMembers(membership.members.inMeetingMembers, 'inMeetingMembers');
+      updateMembers(membership.members.notInMeetingMembers, 'notInMeetingMembers');
     }
   });
+}
+
+function updateMembers(members, membersID) {
+  if (members) {
+    // remove previous roster
+    document.getElementById(membersID).textContent = '';
+
+    members.forEach((member) => {    
+        let tbody = document.getElementById(membersID);
+        let tr = document.createElement('tr');
+        tr.setAttribute('id', member.personID);
+        for (let i = 0; i < ROSTER_STATES.length; i++) {
+          let td = document.createElement('td');
+          td.innerHTML = member[ROSTER_STATES[i]];
+          tr.appendChild(td);
+        }
+        tbody.appendChild(tr);
+    });
+  }
 }
 
 function getMeeting() {

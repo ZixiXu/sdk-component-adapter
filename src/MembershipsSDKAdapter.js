@@ -42,8 +42,6 @@ export default class MembershipsSDKAdapter extends MembershipsAdapter {
    */
   getMembersFromDestination(destinationID, destinationType) {
     if (!(destinationID in this.getMembershipObservables)) {
-      // console.log("first membership!");
-
       const sdkMeeting = this.fetchMeeting(destinationID);
       const getMembership$ = Observable.create((observer) => {
         if (this.memberships[destinationID]) {
@@ -65,8 +63,6 @@ export default class MembershipsSDKAdapter extends MembershipsAdapter {
 
       const membershipUpdateEvent$ = fromEvent(sdkMeeting.members, EVENT_MEMBERS_UPDATE).pipe(
         map(({full}) => {
-          // TODO: add duplicate fix
-          // TODO: add inmeeting/notinmeeting
           const inMeetingMembers = [];
           const notInMeetingMembers = [];
 
@@ -86,7 +82,6 @@ export default class MembershipsSDKAdapter extends MembershipsAdapter {
             memberArray.push(member);
           });
 
-          // console.log('1111', inMeetingMembers, notInMeetingMembers);
           this.memberships[destinationID].members = {inMeetingMembers, notInMeetingMembers};
 
           return this.memberships[destinationID];
