@@ -1,6 +1,7 @@
 import {concat, fromEvent, Observable} from 'rxjs';
 import {map, publishReplay, refCount} from 'rxjs/operators';
 import {MembershipsAdapter} from '@webex/component-adapter-interfaces';
+// import {MembershipsAdapter, DestinationType} from '../../component-adapter-interfaces/src/MembershipsAdapter.js';
 
 // JS SDK Events
 const EVENT_MEMBERS_UPDATE = 'members:update';
@@ -58,14 +59,19 @@ export default class MembershipsSDKAdapter extends MembershipsAdapter {
         this.memberships[destinationID] = {
           destinationID,
           destinationType,
-          members: [],
+          members: {},
         };
       }
 
       const membershipUpdateEvent$ = fromEvent(sdkMeeting.members, EVENT_MEMBERS_UPDATE).pipe(
         map(({full}) => {
+          // TODO: add duplicate fix
+          // TODO: add inmeeting/notinmeeting
+          const inMeetingMembers = [];
+          const notInMeetingMembers = [];
+
           Object.keys(full).forEach((key) => {
-            this.memberships[destinationID].members.push({
+            const member = {
               personID: full[key].id,
               email: full[key].email,
               name: full[key].name,
@@ -73,10 +79,15 @@ export default class MembershipsSDKAdapter extends MembershipsAdapter {
               isVideoMuted: !!full[key].isVideoMuted,
               isSelf: !!full[key].isSelf,
               isHost: !!full[key].isHost,
-              isInMeeting: !!full[key].isInMeeting,
               isSharing: !!full[key].isContentSharing,
-            });
+            };
+            const memberArray = full[key].isInMeeting ? inMeetingMembers : notInMeetingMembers;
+
+            memberArray.push(member);
           });
+
+          // console.log('1111', inMeetingMembers, notInMeetingMembers);
+          this.memberships[destinationID].members = {inMeetingMembers, notInMeetingMembers};
 
           return this.memberships[destinationID];
         })
